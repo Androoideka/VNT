@@ -11,8 +11,10 @@ namespace VNT
 {
     public partial class Tweaker : Form
     {
-        string image, setting, var;
-        string[] vars, slides;
+        public string image { get; set; }
+        public string setting { get; set; }
+        public string var { get; set; }
+        private string[] vars, slides;
         public Tweaker(string[] slideList, string[] variables, string img, string info)
         {
             InitializeComponent();
@@ -42,6 +44,8 @@ namespace VNT
                 comboBox1.Enabled = true;
                 numericUpDown1.Enabled = true;
                 comboBox3.Enabled = true;
+                if(comboBox3.SelectedIndex == -1)
+                    comboBox3.SelectedIndex = comboBox2.SelectedIndex;
             }
             if (radioButton3.Checked)
             {
@@ -49,27 +53,6 @@ namespace VNT
                 comboBox1.Enabled = true;
                 numericUpDown1.Enabled = true;
                 comboBox3.Enabled = false;
-            }
-        }
-        public string pictar
-        {
-            get
-            {
-                return image;
-            }
-        }
-        public string clickedy
-        {
-            get
-            {
-                return setting;
-            }
-        }
-        public string variable
-        {
-            get
-            {
-                return var;
             }
         }
         private void Tweaker_KeyPress(object sender, KeyPressEventArgs e)
