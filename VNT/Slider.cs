@@ -236,12 +236,9 @@ namespace VNT
                 }
                 else
                 {
-                    pictureBoxs.RemoveAt((int)(sender as PictureBox).Tag);
-                    Controls.Remove((sender as PictureBox));
                     slides[slideRefer].info.RemoveAt((int)(sender as PictureBox).Tag);
                     slides[slideRefer].pbNum--;
-                    for (int i = 0; i < pictureBoxs.Count; i++)
-                        pictureBoxs[i].Tag = i;
+                    numericUpDown1_ValueChanged(null, EventArgs.Empty);
                 }
             }
         }
