@@ -6,29 +6,33 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
+using System.IO;
 
 namespace VNT
 {
     public partial class Tweaker : Form
     {
-        public string image { get; set; }
-        public string setting { get; set; }
+        public Attributes setting { get; set; }
         public string var { get; set; }
         private string[] vars, slides;
-        public Tweaker(string[] slideList, string[] variables, string img, string info)
+        private string fileName { get; set; }
+        public Tweaker(string[] slideList, string[] variables, Attributes attribute, string filePath)
         {
             InitializeComponent();
             slides = slideList;
             vars = variables;
-            setting = info;
-            image = img;
+            setting = attribute;
+            fileName = filePath;
         }
         private void button1_Click(object sender, EventArgs e)
         {
             this.Focus();
             openFileDialog1.Filter = "Image Files(*.BMP; *.JPG; *.GIF; *.PNG)| *.BMP; *.JPG; *.GIF; *.PNG";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
-                image = openFileDialog1.FileName;
+            {
+                if (!System.IO.File.Exists(Path.Combine(System.IO.Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName)))
+                    System.IO.File.Copy(openFileDialog1.FileName, Path.Combine(System.IO.Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName));
+            }
         }
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
@@ -42,15 +46,13 @@ namespace VNT
             {
                 comboBox1.Enabled = true;
                 numericUpDown1.Enabled = true;
-                comboBox3.Enabled = true;
-                if(comboBox3.SelectedIndex == -1)
-                    comboBox3.SelectedIndex = comboBox2.SelectedIndex;
+                comboBox3.Enabled = false;
             }
             else if (radioButton3.Checked)
             {
                 comboBox1.Enabled = true;
                 numericUpDown1.Enabled = true;
-                comboBox3.Enabled = false;
+                comboBox3.Enabled = true;
             }
             else
             {
@@ -66,7 +68,7 @@ namespace VNT
         private void Tweaker_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (radioButton1.Checked)
-                setting = "1/" + comboBox2.Items[comboBox2.SelectedIndex];
+                setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "1/" + comboBox1.Items[comboBox1.SelectedIndex].ToString());
             else
             {
                 for (int i = 0; i < comboBox1.Items.Count; i++)
@@ -81,9 +83,9 @@ namespace VNT
                 }
                 var = comboBox1.Items[comboBox1.SelectedIndex].ToString();
                 if (radioButton2.Checked)
-                    setting = "3/" + @comboBox1.Items[comboBox1.SelectedIndex] + @">" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex] + @";" + comboBox3.Items[comboBox3.SelectedIndex];
+                    setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "2/" + @comboBox1.Items[comboBox1.SelectedIndex].ToString() + "*" + (int)numericUpDown1.Value + "/" + comboBox2.Items[comboBox2.SelectedIndex].ToString());
                 else if (radioButton3.Checked)
-                    setting = "2/" + @comboBox1.Items[comboBox1.SelectedIndex] + @"+" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex];
+                    setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "3/" + @comboBox1.Items[comboBox1.SelectedIndex].ToString() + "*" + (int)numericUpDown1.Value + "/" + comboBox2.Items[comboBox2.SelectedIndex].ToString() + ";" + comboBox3.Items[comboBox3.SelectedIndex].ToString());
             }
         }
         private int findIndex(ComboBox cb, string compare)
@@ -110,71 +112,43 @@ namespace VNT
                     comboBox3.Items.Add(slides[i]);
                 }
             }
-            if (Convert.ToInt32(setting.Substring(0, 1)) == 1)
-            {
-                /*for (int i = 0; i < comboBox2.Items.Count; i++)
-                {
-                    if (Convert.ToSingle(setting.Substring(2, setting.Length - 2)) == Convert.ToSingle(comboBox2.Items[i]))
-                        comboBox2.SelectedIndex = i;
-                }*/
-                comboBox2.SelectedIndex = findIndex(comboBox2, setting.Substring(2, setting.Length - 2));
-                radioButton1.Checked = true;
-                radioButton2.Checked = false;
-                radioButton3.Checked = false;
-                radioButton4.Checked = false;
-            }
-            else if (Convert.ToInt32(setting.Substring(0, 1)) == 3)
-            {
-                /*for (int i = 0; i < comboBox1.Items.Count; i++)
-                {
-                    if (setting.Substring(2, setting.IndexOf(">") - 2) == comboBox1.Items[i].ToString())
-                        comboBox1.SelectedIndex = i;
-                }
-                for (int i = 0; i < comboBox2.Items.Count; i++)
-                {
-                    if (Convert.ToSingle(setting.Substring(setting.IndexOf("/", 2) + 1, setting.IndexOf(";") - setting.IndexOf("/", 2) - 1)) == Convert.ToSingle(comboBox2.Items[i]))
-                        comboBox2.SelectedIndex = i;
-                }
-                for (int i = 0; i < comboBox3.Items.Count; i++)
-                {
-                    if (Convert.ToSingle(setting.Substring(setting.IndexOf(";") + 1, setting.Length - setting.IndexOf(";") - 1)) == Convert.ToSingle(comboBox3.Items[i]))
-                        comboBox3.SelectedIndex = i;
-                }*/
-                comboBox1.SelectedIndex = findIndex(comboBox1, setting.Substring(2, setting.IndexOf(">") - 2));
-                comboBox2.SelectedIndex = findIndex(comboBox2, setting.Substring(setting.IndexOf("/", 2) + 1, setting.IndexOf(";") - setting.IndexOf("/", 2) - 1));
-                comboBox3.SelectedIndex = findIndex(comboBox3, setting.Substring(setting.IndexOf(";") + 1, setting.Length - setting.IndexOf(";") - 1));
-                numericUpDown1.Value = Convert.ToDecimal(setting.Substring(setting.IndexOf(">") + 1, setting.IndexOf("/", 2) - setting.IndexOf(">") - 1));
-                radioButton1.Checked = false;
-                radioButton2.Checked = true;
-                radioButton3.Checked = false;
-                radioButton4.Checked = false;
-            }
-            else if (Convert.ToInt32(setting.Substring(0, 1)) == 2)
-            {
-                /*for (int i = 0; i < comboBox1.Items.Count; i++)
-                {
-                    if (setting.Substring(2, setting.IndexOf("+") - 2) == comboBox1.Items[i].ToString())
-                        comboBox1.SelectedIndex = i;
-                }
-                for (int i = 0; i < comboBox2.Items.Count; i++)
-                {
-                    if (Convert.ToSingle(setting.Substring(setting.IndexOf("/", 2) + 1, setting.Length - setting.IndexOf("/", 2) - 1)) == Convert.ToSingle(comboBox2.Items[i]))
-                        comboBox2.SelectedIndex = i;
-                }*/
-                comboBox1.SelectedIndex = findIndex(comboBox1, setting.Substring(2, setting.IndexOf("+") - 2));
-                comboBox2.SelectedIndex = findIndex(comboBox2, setting.Substring(setting.IndexOf("/", 2) + 1, setting.Length - setting.IndexOf("/", 2) - 1));
-                numericUpDown1.Value = Convert.ToDecimal(setting.Substring(setting.IndexOf("+") + 1, setting.IndexOf("/", 2) - setting.IndexOf("+") - 1));
-                radioButton1.Checked = false;
-                radioButton2.Checked = false;
-                radioButton3.Checked = true;
-                radioButton4.Checked = false;
-            }
-            else if (Convert.ToInt32(setting.Substring(0, 1)) == 4)
+            if (setting.type == 4)
             {
                 radioButton1.Checked = false;
-                radioButton2.Checked = false;
                 radioButton3.Checked = false;
+                radioButton2.Checked = false;
                 radioButton4.Checked = true;
+            }
+            else
+            {
+                comboBox2.SelectedIndex = findIndex(comboBox2, setting.slides[0].ToString());
+                if (setting.type == 1)
+                {
+                    radioButton1.Checked = true;
+                    radioButton3.Checked = false;
+                    radioButton2.Checked = false;
+                    radioButton4.Checked = false;
+                }
+                else
+                {
+                    comboBox1.SelectedIndex = findIndex(comboBox1, setting.variables[0]);
+                    numericUpDown1.Value = Convert.ToDecimal(setting.value);
+                    if (setting.type == 2)
+                    {
+                        radioButton1.Checked = false;
+                        radioButton3.Checked = true;
+                        radioButton2.Checked = false;
+                        radioButton4.Checked = false;
+                    }
+                    else
+                    {
+                        comboBox3.SelectedIndex = findIndex(comboBox3, setting.slides[1].ToString());
+                        radioButton1.Checked = false;
+                        radioButton3.Checked = false;
+                        radioButton2.Checked = true;
+                        radioButton4.Checked = false;
+                    }
+                }
             }
         }
     }

@@ -18,16 +18,16 @@ namespace VNT
         {
             for(int i = 0; i < slideList.Count; i++)
             {
-                for (int j = 0; j < slideList[i].info.Count; j++)
+                for (int j = 0; j < slideList[i].pbInfo.Count; j++)
                 {
-                    if (Convert.ToInt32(slideList[i].info[j][3].Substring(0, 1)) == 2)
+                    if (slideList[i].pbInfo[j].type == 2)
                     {
-                        if (slideList[i].info[j][3].Substring(2, slideList[i].info[j][3].IndexOf("+") - 2) == name)
+                        if (slideList[i].pbInfo[j].variables[0] == name)
                             return false;
                     }
-                    else if (Convert.ToInt32(slideList[i].info[j][3].Substring(0, 1)) == 3)
+                    else if (slideList[i].pbInfo[j].type == 3)
                     {
-                        if (slideList[i].info[j][3].Substring(2, slideList[i].info[j][3].IndexOf(">") - 2) == name)
+                        if (slideList[i].pbInfo[j].variables[0] == name)
                             return false;
                     }
                 }

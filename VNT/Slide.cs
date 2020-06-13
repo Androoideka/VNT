@@ -3,30 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
+using System.Drawing;
 
 namespace VNT
 {
     class Slide
     {
         //Change this to properties
-        public float index { get; set; }
-        public string pathBG { get; set; }
-        public List<string[]> info { get; set; } //0 - picture box location, 1 - picturebox size, 2 - picturebox path, 3 - picturebox role
+        public decimal index { get; set; }
+        public Attributes bgInfo { get; set; }
+        public List<Attributes> pbInfo { get; set; }
         public Slide(string[] feed, int startFrom)
         {
-            index = Convert.ToSingle(feed[startFrom].Substring(6, feed[startFrom].Length - 6));
-            pathBG = feed[startFrom + 1];
-            info = new List<string[]>();
-            for (int i = 0; feed.Length > startFrom + 2 + i * 4 && (feed[startFrom + 2 + i * 4].Length < 5 || feed[startFrom + 2 + i * 4].Substring(0, 5) != "Slide"); i++)
-            {
-                info.Add(new string[4]);
-                for (int j = 0; j < 4; j++)
-                    info[i][j] = feed[startFrom + 2 + i * 4 + j];
-            }
-        }
-        public Slide()
-        {
-            info = new List<string[]>();
+            index = Convert.ToDecimal(feed[startFrom].Substring(6, feed[startFrom].Length - 6));
+            bgInfo = new Attributes(feed[startFrom + 1], feed[startFrom + 2], feed[startFrom + 3], feed[startFrom + 4]);
+            pbInfo = new List<Attributes>();
+            for (int i = 1; feed.Length > startFrom + i * 4 + 1 && (feed[startFrom + i * 4 + 1].Length < 5 || feed[startFrom + i * 4 + 1].Substring(0, 5) != "Slide"); i++)
+                pbInfo.Add(new Attributes(feed[startFrom + i * 4 + 1], feed[startFrom + i * 4 + 2], feed[startFrom + i * 4 + 3], feed[startFrom + i * 4 + 4]));
         }
     }
 }

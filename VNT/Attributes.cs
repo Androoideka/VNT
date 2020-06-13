@@ -6,7 +6,7 @@ using System.Drawing;
 
 namespace VNT
 {
-    internal class Attributes
+    public class Attributes
     {
         public Point position { get; set; }
         public Point size { get; set; }
