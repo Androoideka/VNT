@@ -12,7 +12,6 @@ namespace VNT
 {
     public partial class Slider : Form
     {
-        int anchor1, anchor2;
         string fileName;
         bool playOrEdit, pomeranje = false;
         List<Variable> vars = new List<Variable>();
@@ -67,6 +66,23 @@ namespace VNT
                     slides.Add(new Slide(feed, i));
             }
         }
+        private PictureBox CreatePB(int tag, bool play)
+        {
+            PictureBox pb = new PictureBox();
+            pb.Tag = tag;
+            pb.SizeMode = PictureBoxSizeMode.StretchImage;
+            pb.BackColor = Color.Transparent;
+            pb.Parent = this;
+            pb.Anchor = (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top);
+            pb.Image = setImage(Path.Combine(Application.StartupPath, "Default.png"));
+            if (play)
+                pb.MouseClick += new MouseEventHandler(PlayClicky);
+            else
+                pb.MouseClick += new MouseEventHandler(Clicky);
+            pb.Enabled = false;
+            Controls.Add(pb);
+            return pb;
+        }
         private void Slider_Load(object sender, EventArgs e)
         {
             if (!File.Exists(Path.Combine(Path.GetDirectoryName(fileName), "Default.png")))
@@ -87,26 +103,14 @@ namespace VNT
                 }
             }
             for (int i = 0; i < maxPictureBox(slides); i++)
-            {
-                pictureBoxs.Add(new PictureBox());
-                Controls.Add(pictureBoxs[i]);
-                pictureBoxs[i].Tag = i;
-                pictureBoxs[i].SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBoxs[i].BackColor = Color.Transparent;
-                pictureBoxs[i].Parent = this;
-                pictureBoxs[i].Anchor = (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top);
-                pictureBoxs[i].Image = setImage(Path.Combine(Application.StartupPath, "Default.png"));
-                if(playOrEdit)
-                    pictureBoxs[i].MouseClick += new MouseEventHandler(PlayClicky);
-                else
-                    pictureBoxs[i].MouseClick += new MouseEventHandler(Clicky);
-            }
+                pictureBoxs.Add(CreatePB(i, playOrEdit));
             if (!playOrEdit)
             {
                 this.KeyPress += new KeyPressEventHandler(Slider_KeyPress);
                 this.MouseDown += new MouseEventHandler(Slider_MouseDown);
                 this.MouseMove += new MouseEventHandler(Slider_MouseMove);
                 this.MouseUp += new MouseEventHandler(Slider_MouseUp);
+                numericUpDown1.Enabled = true;
             }
             else
                 this.MouseClick += new MouseEventHandler(PlayClicky);
@@ -115,16 +119,16 @@ namespace VNT
         private Attributes setupClick(Attributes currentSettings)
         {
             int slideRefer = findSlide(slides, Convert.ToDecimal(numericUpDown1.Value));
-            List<string> slideList = new List<string>();
-            List<string> variables = new List<string>();
+            string[] slideList = new string[slides.Count];
+            string[] varList = new string[vars.Count];
             for (int i = 0; i < Math.Max(slides.Count, vars.Count); i++)
             {
                 if (i < slides.Count)
-                    slideList.Add(slides[i].index.ToString());
+                    slideList[i] = slides[i].index.ToString();
                 if (i < vars.Count)
-                    variables.Add(vars[i].name);
+                    varList[i] = vars[i].name;
             }
-            Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), currentSettings, fileName);
+            Tweaker twok = new Tweaker(slideList, varList, currentSettings, fileName);
             twok.ShowDialog();
             currentSettings = twok.setting;
             if (!String.IsNullOrWhiteSpace(twok.var) && varExists(vars, twok.var) == -1)
@@ -337,32 +341,20 @@ namespace VNT
                 slideRefer = slides.Count - 1;
             }
             while (slides[slideRefer].pbInfo.Count >= pictureBoxs.Count)
-            {
-                pictureBoxs.Add(new PictureBox());
-                pictureBoxs[pictureBoxs.Count - 1].Tag = pictureBoxs.Count - 1;
-                pictureBoxs[pictureBoxs.Count - 1].SizeMode = PictureBoxSizeMode.StretchImage;
-                pictureBoxs[pictureBoxs.Count - 1].BackColor = Color.Transparent;
-                pictureBoxs[pictureBoxs.Count - 1].Parent = this;
-                pictureBoxs[pictureBoxs.Count - 1].Anchor = (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top);
-                pictureBoxs[pictureBoxs.Count - 1].MouseClick += Clicky;
-                pictureBoxs[pictureBoxs.Count - 1].Enabled = false;
-                Controls.Add(pictureBoxs[pictureBoxs.Count - 1]);
-            }
-            anchor1 = e.X;
-            anchor2 = e.Y;
-            slides[slideRefer].pbInfo.Add(new Attributes(anchor1 + "," + anchor2, 0 + "," + 0, "Default.png", "1/" + slides[slideRefer].index));
+                pictureBoxs.Add(CreatePB(pictureBoxs.Count, false));
+            slides[slideRefer].pbInfo.Add(new Attributes(e.X + "," + e.Y, 0 + "," + 0, "Default.png", "1/" + slides[slideRefer].index));
             pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Image = setImage(Path.Combine(Application.StartupPath, "Default.png"));
             pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Size = (Size)new Point(0, 0);
-            pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Location = new Point(anchor1, anchor2);
+            pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Location = new Point(e.X, e.Y);
             pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Visible = true;
             pomeranje = true;
         }
         private void Slider_MouseUp(object sender, MouseEventArgs e)
         {
-            pomeranje = false;
-            int slideRefer = findSlide(slides, numericUpDown1.Value);
-            try
+            if (pomeranje)
             {
+                pomeranje = false;
+                int slideRefer = findSlide(slides, numericUpDown1.Value);
                 if (pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Size.Width < 5 || pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Size.Height < 5)
                 {
                     slides[slideRefer].pbInfo.RemoveAt((int)(sender as PictureBox).Tag);
@@ -376,7 +368,6 @@ namespace VNT
                     pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Enabled = true;
                 }
             }
-            catch { }
             this.Focus();
         }
         private void Slider_FormClosing(object sender, FormClosingEventArgs e)
@@ -392,23 +383,23 @@ namespace VNT
                 pictureBoxs[slides[slideRefer].pbInfo.Count - 1].SuspendLayout();
                 if (e.X <= pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Left)
                 {
-                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Width = anchor1 - e.X;
+                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Width = slides[slideRefer].pbInfo[slides[slideRefer].pbInfo.Count - 1].position.X - e.X;
                     pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Left = e.X;
                 }
                 else
                 {
-                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Width = e.X - anchor1;
-                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Left = anchor1;
+                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Width = e.X - slides[slideRefer].pbInfo[slides[slideRefer].pbInfo.Count - 1].position.X;
+                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Left = slides[slideRefer].pbInfo[slides[slideRefer].pbInfo.Count - 1].position.X;
                 }
                 if (e.Y <= pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Top)
                 {
-                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Height = anchor2 - e.Y;
+                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Height = slides[slideRefer].pbInfo[slides[slideRefer].pbInfo.Count - 1].position.Y - e.Y;
                     pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Top = e.Y;
                 }
                 else
                 {
-                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Height = e.Y - anchor2;
-                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Top = anchor2;
+                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Height = e.Y - slides[slideRefer].pbInfo[slides[slideRefer].pbInfo.Count - 1].position.Y;
+                    pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Top = slides[slideRefer].pbInfo[slides[slideRefer].pbInfo.Count - 1].position.Y;
                 }
                 pictureBoxs[slides[slideRefer].pbInfo.Count - 1].ResumeLayout();
             }
