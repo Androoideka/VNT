@@ -12,9 +12,9 @@ namespace VNT
     public partial class VarTrack : Form
     {
         Variable[] vars;
-        public Attributes config { get; set; }
+        public string config { get; set; }
         bool playMode;
-        public VarTrack(string[] variables, int[] variableValues, Attributes setting, bool playOrEdit)
+        public VarTrack(string[] variables, int[] variableValues, string setting, bool playOrEdit)
         {
             InitializeComponent();
             vars = new Variable[variables.Length];
@@ -26,6 +26,29 @@ namespace VNT
             playMode = playOrEdit;
             config = setting;
         }
+        private void processCommand(Variable[] variables, string setting, bool playMode)
+        {
+            int i = 2;
+            int j = 0;
+            while(setting.IndexOf(";", i) != -1)
+            {
+                j = findAddVariable(j, setting.Substring(i, setting.IndexOf(";", i) - i), variables);
+                if (playMode)
+                    listBox1.Items.Add(variables[j].name + " = " + variables[j].value);
+                else
+                    checkedListBox1.SetItemChecked(j, true);
+                i = setting.IndexOf(";", i) + 1;
+            }
+        }
+        private int findAddVariable(int i, string name, Variable[] variables)
+        {
+            for(; i < variables.Length; i++)
+            {
+                if (variables[i].name == name)
+                    return i;
+            }
+            return -1;
+        }
         private void VarTrack_Load(object sender, EventArgs e)
         {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -35,40 +58,29 @@ namespace VNT
             {
                 listBox1.Enabled = true;
                 listBox1.Visible = true;
-                for (int i = 0; i < vars.Length; i++)
-                    listBox1.Items.Add(vars[i].name + " = " + vars[i].value);
             }
             else
             {
                 checkedListBox1.Enabled = true;
                 checkedListBox1.Visible = true;
-                checkedListBox1.CheckOnClick = true;
                 for (int i = 0; i < vars.Length; i++)
                     checkedListBox1.Items.Add(vars[i].name);
             }
-            int j = 0;
-            for(int i = 0; i < checkedListBox1.Items.Count; i++)
-            {
-                if(config.variables != null && j < config.variables.Length)
-                {
-                    if (checkedListBox1.Items[i].ToString() == config.variables[j])
-                    {
-                        checkedListBox1.SetItemChecked(i, true);
-                        j++;
-                    }
-                    else
-                        checkedListBox1.SetItemChecked(i, false);
-                }
-            }
+            processCommand(vars, config, playMode);
         }
+        private void VarTrack_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if(e.KeyChar == (char)Keys.Return)
+                this.Close();
+        }
+
         private void VarTrack_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!playMode)
             {
-                config.type = 4;
-                config.variables = new string[checkedListBox1.CheckedItems.Count];
+                config = "4/";
                 for (int i = 0; i < checkedListBox1.CheckedItems.Count; i++)
-                    config.variables[i] = checkedListBox1.CheckedItems[i].ToString();
+                    config += checkedListBox1.CheckedItems[i].ToString() + ";";
             }
         }
     }

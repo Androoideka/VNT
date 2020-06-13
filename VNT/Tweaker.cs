@@ -25,6 +25,7 @@ namespace VNT
         }
         private void button1_Click(object sender, EventArgs e)
         {
+            this.Focus();
             openFileDialog1.Filter = "Image Files(*.BMP; *.JPG; *.GIF; *.PNG)| *.BMP; *.JPG; *.GIF; *.PNG";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
                 image = openFileDialog1.FileName;
@@ -33,55 +34,65 @@ namespace VNT
         {
             if (radioButton1.Checked)
             {
-                label1.Text = "";
                 comboBox1.Enabled = false;
                 numericUpDown1.Enabled = false;
                 comboBox3.Enabled = false;
             }
-            if (radioButton2.Checked)
+            else if (radioButton2.Checked)
             {
-                label1.Text = "Compare to:";
                 comboBox1.Enabled = true;
                 numericUpDown1.Enabled = true;
                 comboBox3.Enabled = true;
                 if(comboBox3.SelectedIndex == -1)
                     comboBox3.SelectedIndex = comboBox2.SelectedIndex;
             }
-            if (radioButton3.Checked)
+            else if (radioButton3.Checked)
             {
-                label1.Text = "Add:";
                 comboBox1.Enabled = true;
                 numericUpDown1.Enabled = true;
                 comboBox3.Enabled = false;
+            }
+            else
+            {
+                comboBox1.Enabled = false;
+                numericUpDown1.Enabled = false;
+                comboBox2.Enabled = false;
+                comboBox3.Enabled = false;
+                VarTrack varSetter = new VarTrack(vars, new int[vars.Length], setting, false);
+                varSetter.ShowDialog();
+                setting = varSetter.config;
             }
         }
         private void Tweaker_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == (char)Keys.Return)
-            {
-                if (radioButton1.Checked)
-                    setting = "1/" + comboBox2.Items[comboBox2.SelectedIndex];
-                else
-                {
-                    for (int i = 0; i < comboBox1.Items.Count; i++)
-                    {
-                        if (comboBox1.Items[i].ToString() == @comboBox1.Text)
-                            comboBox1.SelectedIndex = i;
-                    }
-                    if (comboBox1.SelectedIndex == -1)
-                    {
-                        comboBox1.Items.Add(@comboBox1.Text);
-                        comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
-                    }
-                    var = comboBox1.Items[comboBox1.SelectedIndex].ToString();
-                    if (radioButton2.Checked)
-                        setting = "3/" + @comboBox1.Items[comboBox1.SelectedIndex] + @">" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex] + @";" + comboBox3.Items[comboBox3.SelectedIndex];
-                    if (radioButton3.Checked)
-                        setting = "2/" + @comboBox1.Items[comboBox1.SelectedIndex] + @"+" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex];
-                }
                 this.Close();
+        }
+
+        private void Tweaker_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (radioButton1.Checked)
+                setting = "1/" + comboBox2.Items[comboBox2.SelectedIndex];
+            else
+            {
+                for (int i = 0; i < comboBox1.Items.Count; i++)
+                {
+                    if (comboBox1.Items[i].ToString() == @comboBox1.Text)
+                        comboBox1.SelectedIndex = i;
+                }
+                if (comboBox1.SelectedIndex == -1)
+                {
+                    comboBox1.Items.Add(@comboBox1.Text);
+                    comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
+                }
+                var = comboBox1.Items[comboBox1.SelectedIndex].ToString();
+                if (radioButton2.Checked)
+                    setting = "3/" + @comboBox1.Items[comboBox1.SelectedIndex] + @">" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex] + @";" + comboBox3.Items[comboBox3.SelectedIndex];
+                else if (radioButton3.Checked)
+                    setting = "2/" + @comboBox1.Items[comboBox1.SelectedIndex] + @"+" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex];
             }
         }
+
         private void Tweaker_Load(object sender, EventArgs e)
         {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -107,8 +118,9 @@ namespace VNT
                 radioButton1.Checked = true;
                 radioButton2.Checked = false;
                 radioButton3.Checked = false;
+                radioButton4.Checked = false;
             }
-            if (Convert.ToInt32(setting.Substring(0, 1)) == 3)
+            else if (Convert.ToInt32(setting.Substring(0, 1)) == 3)
             {
                 for (int i = 0; i < comboBox1.Items.Count; i++)
                 {
@@ -129,8 +141,9 @@ namespace VNT
                 radioButton1.Checked = false;
                 radioButton2.Checked = true;
                 radioButton3.Checked = false;
+                radioButton4.Checked = false;
             }
-            if (Convert.ToInt32(setting.Substring(0, 1)) == 2)
+            else if (Convert.ToInt32(setting.Substring(0, 1)) == 2)
             {
                 for (int i = 0; i < comboBox1.Items.Count; i++)
                 {
@@ -146,6 +159,14 @@ namespace VNT
                 radioButton1.Checked = false;
                 radioButton2.Checked = false;
                 radioButton3.Checked = true;
+                radioButton4.Checked = false;
+            }
+            else if (Convert.ToInt32(setting.Substring(0, 1)) == 4)
+            {
+                radioButton1.Checked = false;
+                radioButton2.Checked = false;
+                radioButton3.Checked = false;
+                radioButton4.Checked = true;
             }
         }
     }
