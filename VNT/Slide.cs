@@ -7,9 +7,8 @@ using System.Drawing;
 
 namespace VNT
 {
-    class Slide
+    internal class Slide
     {
-        //Change this to properties
         public decimal index { get; set; }
         public Attributes bgInfo { get; set; }
         public List<Attributes> pbInfo { get; set; }
