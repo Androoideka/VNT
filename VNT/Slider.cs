@@ -65,18 +65,7 @@ namespace VNT
             {
                 if (feed[i].Length > 5 && feed[i].Substring(0, 5) == "Slide")
                     slides.Add(new Slide(feed, i));
-                    //i += 5 + slides[slides.Count].pbInfo.Count * 4;
             }
-            /*for (int i = 0; i < feed.Length; i++)
-            {
-                if (feed[i].Length > 5 && feed[i].Substring(0, 5) == "Slide")
-                    n++;
-            }
-            for (int i = 0; i < n; i++)
-            {
-                slides.Add(new Slide(feed, start));
-                start += 5 + slides[i].pbInfo.Count * 4;
-            }*/
         }
         private void Slider_Load(object sender, EventArgs e)
         {
