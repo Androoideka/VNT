@@ -6,53 +6,79 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.IO;
 
 namespace VNT
 {
     public partial class Tweaker : Form
     {
-        public string var { get; set; }
-        Slide[] slides;
-        private string fileName { get; set; }
-        public Tweaker(Slide[] slideList, string filePath)
+        string path;
+        int selected = 1;
+        public Tweaker()
         {
             InitializeComponent();
-            slides = slideList;
-            fileName = filePath;
         }
         private void button1_Click(object sender, EventArgs e)
         {
-            openFileDialog1.Filter = "Image Files(*.BMP; *.JPG; *.GIF; *.PNG)| *.BMP; *.JPG; *.GIF; *.PNG";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
+                path = openFileDialog1.FileName;
+        }
+        public int clickSetting
+        {
+            get
             {
-                if (!File.Exists(Path.Combine(System.IO.Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName)))
-                    File.Copy(openFileDialog1.FileName, Path.Combine(Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName));
+                return selected;
             }
         }
-        private void Tweaker_FormClosing(object sender, FormClosingEventArgs e)
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
-        }
-        private int findIndex(ComboBox cb, string compare)
-        {
-            for(int i = 0; i < cb.Items.Count; i++)
+            if (radioButton1.Checked)
             {
-                if (compare == cb.Items[i].ToString())
-                    return i;
+                textBox1.Enabled = false;
+                textBox2.Text = "Format: 1.6";
+                selected = 1;
             }
-            return 0;
+            if (radioButton3.Checked)
+            {
+                textBox1.Enabled = true;
+                textBox1.Text = "Format: health+num";
+                textBox2.Text = "Format: 1.6";
+                selected = 3;
+            }
+            if (radioButton2.Checked)
+            {
+                textBox1.Enabled = true;
+                textBox1.Text = "Format: health>50";
+                textBox2.Text = "Format: 1;1.6";
+                selected = 2;
+            }
         }
-
-        private void treeView1_AfterSelect(object sender, TreeViewEventArgs e)
+        public string fileName
         {
-            treeView1.
+            get
+            {
+                return path;
+            }
         }
-
-        private void Tweaker_Load(object sender, EventArgs e)
+        public string variableManip
         {
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
+            get
+            {
+                return textBox1.Text;
+            }
+        }
+        public string slideJmp
+        {
+            get
+            {
+                return textBox2.Text;
+            }
+        }
+        private void Tweaker_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == (char)Keys.Return)
+            {
+                this.Close();
+            }
         }
     }
 }

@@ -18,42 +18,29 @@ namespace VNT
         }
         private void button1_Click(object sender, EventArgs e)
         {
-            novelFormLoader(openFileDialog1);
+            openFileDialog1.Filter = "VNT (*.vnt)|*.vnt|All files|*.*";
+            openFileDialog1.DefaultExt = "vnt";
+            DialogResult result = openFileDialog1.ShowDialog();
+            if (result == DialogResult.OK)
+                novelFormLoader(openFileDialog1.FileName, true);
         }
         private void button2_Click(object sender, EventArgs e)
         {
-            novelFormLoader(saveFileDialog1);
-        }
-        private void novelFormLoader(FileDialog fileChoice)
-        {
-            fileChoice.Filter = "VNT (*.vnt)|*.vnt|All files|*.*";
-            fileChoice.FilterIndex = 1;
-            fileChoice.FileName = "";
-            DialogResult result = fileChoice.ShowDialog();
+            saveFileDialog1.Filter = "VNT (*.vnt)|*.vnt|All files|*.*";
+            saveFileDialog1.DefaultExt = "vnt";
+            DialogResult result = saveFileDialog1.ShowDialog();
             if (result == DialogResult.OK)
-            {
-                Slider form;
-                if (fileChoice.GetType() == typeof(OpenFileDialog))
-                {
-                    form = new Slider(fileChoice.FileName, true);
-                    form.Text = "Slide Player";
-                }
-                else
-                {
-                    form = new Slider(fileChoice.FileName, false);
-                    form.Text = "Slide Creator";
-                }
-                form.Show();
-                this.Hide();
-            }
+                novelFormLoader(saveFileDialog1.FileName, false);
         }
-
-        private void Form1_Load(object sender, EventArgs e)
+        private void novelFormLoader(string file, bool openOrSave)
         {
-            this.FormBorderStyle = FormBorderStyle.FixedSingle;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            MessageBox.Show("Made by Andrej Gasic (Androoideka).");
+            Slider form = new Slider(file, openOrSave);
+            if (openOrSave)
+                form.Text = "Slide Player";
+            else
+                form.Text = "Slide Creator";
+            form.Show();
+            this.Hide();
         }
     }
 }
