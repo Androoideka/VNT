@@ -196,13 +196,12 @@ namespace VNT
                             variables.Add(vars[i].name);
                     }
                     string path;
-                    if (slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] != "DefaultPic.png")
+                    if (slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] != "Default.png")
                     { path = fileName.Substring(0, fileName.LastIndexOf(@"\") + 1) + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
                     else
                     { path = Application.StartupPath + @"\" + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
                     Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), path, slides[slideRefer].info[(int)(sender as PictureBox).Tag][3]);
                     twok.ShowDialog();
-                    setImage((sender as PictureBox), twok.image);
                     slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] = twok.image.Substring(twok.image.LastIndexOf(@"\") + 1, twok.image.Length - 1 - twok.image.LastIndexOf(@"\"));
                     slides[slideRefer].info[(int)(sender as PictureBox).Tag][3] = twok.setting;
                     if (varExists(vars, twok.var) == -1)
@@ -210,6 +209,7 @@ namespace VNT
                     try
                     { System.IO.File.Copy(twok.image, fileName.Substring(0, fileName.LastIndexOf(@"\")) + twok.image.Substring(twok.image.LastIndexOf(@"\"), twok.image.Length - twok.image.LastIndexOf(@"\")), true); }
                     catch { }
+                    setImage((sender as PictureBox), twok.image);
                     for (int i = 0; i < vars.Count; i++)
                     {
                         if (vars[i].IsUnused(slides))
@@ -230,9 +230,11 @@ namespace VNT
                             vars.RemoveAt(i);
                         }
                     }
-                    numericUpDown1_ValueChanged(null, EventArgs.Empty);
+                    if (slides[slideRefer].info.Count == 0)
+                        button1_Click(null, EventArgs.Empty);
                 }
             }
+            numericUpDown1_ValueChanged(null, EventArgs.Empty);
         }
         private void cleanUp(string remove, List<Slide> slides)
         {
@@ -378,6 +380,8 @@ namespace VNT
                 pictureBoxs[pictureBoxs.Count - 1].BackColor = Color.Transparent;
                 pictureBoxs[pictureBoxs.Count - 1].Parent = this;
                 pictureBoxs[pictureBoxs.Count - 1].Anchor = (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Top);
+                pictureBoxs[pictureBoxs.Count - 1].MouseClick += Clicky;
+                pictureBoxs[pictureBoxs.Count - 1].Enabled = false;
                 Controls.Add(pictureBoxs[pictureBoxs.Count - 1]);
                 setImage(pictureBoxs[pictureBoxs.Count - 1], Application.StartupPath + @"\Default.png");
             }
@@ -392,7 +396,6 @@ namespace VNT
             pictureBoxs[slides[slideRefer].info.Count - 1].Left = anchor1;
             pictureBoxs[slides[slideRefer].info.Count - 1].Top = anchor2;
             pictureBoxs[slides[slideRefer].info.Count - 1].Visible = true;
-            pictureBoxs[slides[slideRefer].info.Count - 1].Enabled = true;
             pomeranje = true;
         }
         private void Slider_MouseUp(object sender, MouseEventArgs e)
@@ -403,9 +406,14 @@ namespace VNT
             {
                 slides[slideRefer].info[slides[slideRefer].info.Count - 1][0] = pictureBoxs[slides[slideRefer].info.Count - 1].Top + "," + pictureBoxs[slides[slideRefer].info.Count - 1].Left;
                 slides[slideRefer].info[slides[slideRefer].info.Count - 1][1] = pictureBoxs[slides[slideRefer].info.Count - 1].Width + "," + pictureBoxs[slides[slideRefer].info.Count - 1].Height;
-                pictureBoxs[slides[slideRefer].info.Count - 1].MouseClick += new MouseEventHandler(Clicky);
+                pictureBoxs[slides[slideRefer].info.Count - 1].Enabled = true;
             }
             catch { }
+        }
+        private void Slider_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            button2_Click(null, EventArgs.Empty);
+            Application.Restart();
         }
         private void Slider_MouseMove(object sender, MouseEventArgs e)
         {
@@ -435,10 +443,6 @@ namespace VNT
                 }
                 pictureBoxs[slides[slideRefer].info.Count - 1].ResumeLayout();
             }
-        }
-        private void Slider_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            Application.Exit();
         }
     }
 }

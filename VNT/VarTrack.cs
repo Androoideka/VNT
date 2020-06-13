@@ -63,17 +63,12 @@ namespace VNT
             {
                 checkedListBox1.Enabled = true;
                 checkedListBox1.Visible = true;
+                checkedListBox1.CheckOnClick = true;
                 for (int i = 0; i < vars.Length; i++)
                     checkedListBox1.Items.Add(vars[i].name);
             }
             processCommand(vars, config, playMode);
         }
-        private void VarTrack_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if(e.KeyChar == (char)Keys.Return)
-                this.Close();
-        }
-
         private void VarTrack_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!playMode)

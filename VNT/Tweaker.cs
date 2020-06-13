@@ -63,12 +63,6 @@ namespace VNT
                 setting = varSetter.config;
             }
         }
-        private void Tweaker_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (e.KeyChar == (char)Keys.Return)
-                this.Close();
-        }
-
         private void Tweaker_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (radioButton1.Checked)
@@ -92,7 +86,15 @@ namespace VNT
                     setting = "2/" + @comboBox1.Items[comboBox1.SelectedIndex] + @"+" + (int)numericUpDown1.Value + @"/" + comboBox2.Items[comboBox2.SelectedIndex];
             }
         }
-
+        private int findIndex(ComboBox cb, string compare)
+        {
+            for(int i = 0; i < cb.Items.Count; i++)
+            {
+                if (compare == cb.Items[i].ToString())
+                    return i;
+            }
+            return 0;
+        }
         private void Tweaker_Load(object sender, EventArgs e)
         {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -110,11 +112,12 @@ namespace VNT
             }
             if (Convert.ToInt32(setting.Substring(0, 1)) == 1)
             {
-                for (int i = 0; i < comboBox2.Items.Count; i++)
+                /*for (int i = 0; i < comboBox2.Items.Count; i++)
                 {
                     if (Convert.ToSingle(setting.Substring(2, setting.Length - 2)) == Convert.ToSingle(comboBox2.Items[i]))
                         comboBox2.SelectedIndex = i;
-                }
+                }*/
+                comboBox2.SelectedIndex = findIndex(comboBox2, setting.Substring(2, setting.Length - 2));
                 radioButton1.Checked = true;
                 radioButton2.Checked = false;
                 radioButton3.Checked = false;
@@ -122,7 +125,7 @@ namespace VNT
             }
             else if (Convert.ToInt32(setting.Substring(0, 1)) == 3)
             {
-                for (int i = 0; i < comboBox1.Items.Count; i++)
+                /*for (int i = 0; i < comboBox1.Items.Count; i++)
                 {
                     if (setting.Substring(2, setting.IndexOf(">") - 2) == comboBox1.Items[i].ToString())
                         comboBox1.SelectedIndex = i;
@@ -136,7 +139,10 @@ namespace VNT
                 {
                     if (Convert.ToSingle(setting.Substring(setting.IndexOf(";") + 1, setting.Length - setting.IndexOf(";") - 1)) == Convert.ToSingle(comboBox3.Items[i]))
                         comboBox3.SelectedIndex = i;
-                }
+                }*/
+                comboBox1.SelectedIndex = findIndex(comboBox1, setting.Substring(2, setting.IndexOf(">") - 2));
+                comboBox2.SelectedIndex = findIndex(comboBox2, setting.Substring(setting.IndexOf("/", 2) + 1, setting.IndexOf(";") - setting.IndexOf("/", 2) - 1));
+                comboBox3.SelectedIndex = findIndex(comboBox3, setting.Substring(setting.IndexOf(";") + 1, setting.Length - setting.IndexOf(";") - 1));
                 numericUpDown1.Value = Convert.ToDecimal(setting.Substring(setting.IndexOf(">") + 1, setting.IndexOf("/", 2) - setting.IndexOf(">") - 1));
                 radioButton1.Checked = false;
                 radioButton2.Checked = true;
@@ -145,7 +151,7 @@ namespace VNT
             }
             else if (Convert.ToInt32(setting.Substring(0, 1)) == 2)
             {
-                for (int i = 0; i < comboBox1.Items.Count; i++)
+                /*for (int i = 0; i < comboBox1.Items.Count; i++)
                 {
                     if (setting.Substring(2, setting.IndexOf("+") - 2) == comboBox1.Items[i].ToString())
                         comboBox1.SelectedIndex = i;
@@ -154,7 +160,9 @@ namespace VNT
                 {
                     if (Convert.ToSingle(setting.Substring(setting.IndexOf("/", 2) + 1, setting.Length - setting.IndexOf("/", 2) - 1)) == Convert.ToSingle(comboBox2.Items[i]))
                         comboBox2.SelectedIndex = i;
-                }
+                }*/
+                comboBox1.SelectedIndex = findIndex(comboBox1, setting.Substring(2, setting.IndexOf("+") - 2));
+                comboBox2.SelectedIndex = findIndex(comboBox2, setting.Substring(setting.IndexOf("/", 2) + 1, setting.Length - setting.IndexOf("/", 2) - 1));
                 numericUpDown1.Value = Convert.ToDecimal(setting.Substring(setting.IndexOf("+") + 1, setting.IndexOf("/", 2) - setting.IndexOf("+") - 1));
                 radioButton1.Checked = false;
                 radioButton2.Checked = false;
