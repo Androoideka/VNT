@@ -35,6 +35,8 @@ namespace VNT
             {
                 listBox1.Enabled = true;
                 listBox1.Visible = true;
+                for (int i = 0; i < vars.Length; i++)
+                    listBox1.Items.Add(vars[i].name + " = " + vars[i].value);
             }
             else
             {

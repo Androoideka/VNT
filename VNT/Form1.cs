@@ -53,6 +53,7 @@ namespace VNT
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
+            MessageBox.Show("Made by Andrej Gasic (Androoideka).");
         }
     }
 }
