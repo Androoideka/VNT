@@ -134,10 +134,6 @@ namespace VNT
                 this.MouseDown += new MouseEventHandler(Slider_MouseDown);
                 this.MouseMove += new MouseEventHandler(Slider_MouseMove);
                 this.MouseUp += new MouseEventHandler(Slider_MouseUp);
-                button1.Enabled = true;
-                button1.Visible = true;
-                button2.Enabled = true;
-                button2.Visible = true;
             }
             numericUpDown1_ValueChanged(null, EventArgs.Empty);
         }
@@ -153,15 +149,10 @@ namespace VNT
                 if (i < vars.Count)
                     variables.Add(vars[i].name);
             }
-            string path;
-            if (currentSettings.path != "Default.png")
-            { path = Path.Combine(Path.GetDirectoryName(fileName), currentSettings.path); }
-            else
-            { path = Path.Combine(Application.StartupPath, currentSettings.path); }
             Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), currentSettings, fileName);
             twok.ShowDialog();
             currentSettings = twok.setting;
-            if (varExists(vars, twok.var) == -1)
+            if (!String.IsNullOrWhiteSpace(twok.var) && varExists(vars, twok.var) == -1)
                 vars.Add(new Variable(twok.var));
             return currentSettings;
         }
@@ -224,52 +215,15 @@ namespace VNT
                 if (e.Button == MouseButtons.Left)
                 {
                     slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag] = setupClick(slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag]);
-                    lookAtVariables();
                     (sender as PictureBox).Image = setImage(Path.Combine(Path.GetDirectoryName(fileName), slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag].path));
-                    /*List<string> slideList = new List<string>();
-                    List<string> variables = new List<string>();
-                    for (int i = 0; i < Math.Max(slides.Count, vars.Count); i++)
-                    {
-                        if(i < slides.Count)
-                            slideList.Add(slides[i].index.ToString());
-                        if(i < vars.Count)
-                            variables.Add(vars[i].name);
-                    }
-                    string path;
-                    if (slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag].path != "Default.png")
-                    { path = fileName.Substring(0, fileName.LastIndexOf(@"\") + 1) + slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag].path; }
-                    else
-                    { path = Application.StartupPath + @"\" + slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag].path; }
-                    Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag], fileName);
-                    twok.ShowDialog();
-                    slides[slideRefer].pbInfo[(int)(sender as PictureBox).Tag] = twok.setting;
-                    if (varExists(vars, twok.var) == -1)
-                        vars.Add(new Variable(twok.var));
-                    (sender as PictureBox).Image = setImage(twok.setting.path);
-                    for (int i = 0; i < vars.Count; i++)
-                    {
-                        if (vars[i].IsUnused(slides))
-                        {
-                            cleanUp(vars[i].name, slides);
-                            vars.RemoveAt(i);
-                        }
-                    }*/
                 }
-
                 else
                 {
                     slides[slideRefer].pbInfo.RemoveAt((int)(sender as PictureBox).Tag);
-                    for (int i = 0; i < vars.Count; i++)
-                    {
-                        if (vars[i].IsUnused(slides))
-                        {
-                            cleanUp(vars[i].name, slides);
-                            vars.RemoveAt(i);
-                        }
-                    }
                     if (slides[slideRefer].pbInfo.Count == 0)
-                        button1_Click(null, EventArgs.Empty);
+                        delete();
                 }
+                lookAtVariables();
             }
             numericUpDown1_ValueChanged(null, EventArgs.Empty);
         }
@@ -290,7 +244,7 @@ namespace VNT
             int k = 0;
             for(int i = 0; i < find.Length; i++)
             {
-                if (find[i] != remove)
+                if (find[i] == remove)
                     replacement[i - k] = find[i];
                 else
                     k++;
@@ -306,14 +260,20 @@ namespace VNT
                 slides.Add(new Slide(info, 0));
                 slideRefer = slides.Count - 1;
             }
-            if (e.KeyChar == (char)98)
+            if (e.KeyChar == 'b' || e.KeyChar == 'B')
             {
                 slides[slideRefer].bgInfo = setupClick(slides[slideRefer].bgInfo);
                 lookAtVariables();
                 this.BackgroundImage = Image.FromFile(Path.Combine(Path.GetDirectoryName(fileName), slides[slideRefer].bgInfo.path));
             }
+            else if (e.KeyChar == 's' || e.KeyChar == 'S')
+            {
+                save();
+            }
+            else if (e.KeyChar == (char)46)
+                delete();
         }
-        private void button2_Click(object sender, EventArgs e)
+        private void save()
         {
             StreamWriter sw = new StreamWriter(fileName);
             int i = 0;
@@ -344,7 +304,7 @@ namespace VNT
             }
             sw.Close();
         }
-        private void button1_Click(object sender, EventArgs e)
+        private void delete()
         {
             try
             {
@@ -410,12 +370,12 @@ namespace VNT
                 pictureBoxs[pictureBoxs.Count - 1].MouseClick += Clicky;
                 pictureBoxs[pictureBoxs.Count - 1].Enabled = false;
                 Controls.Add(pictureBoxs[pictureBoxs.Count - 1]);
-                pictureBoxs[pictureBoxs.Count - 1].Image = setImage(Path.Combine(Application.StartupPath, "Default.png"));
             }
             slides[slideRefer].index = numericUpDown1.Value;
             anchor1 = e.X;
             anchor2 = e.Y;
             slides[slideRefer].pbInfo.Add(new Attributes(anchor1 + "," + anchor2, 0 + "," + 0, "Default.png", "1/" + slides[slideRefer].index));
+            pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Image = setImage(Path.Combine(Application.StartupPath, "Default.png"));
             pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Size = (Size)new Point(0, 0);
             pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Location = new Point(anchor1, anchor2);
             pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Visible = true;
@@ -432,10 +392,12 @@ namespace VNT
                 pictureBoxs[slides[slideRefer].pbInfo.Count - 1].Enabled = true;
             }
             catch { }
+            this.Focus();
         }
         private void Slider_FormClosing(object sender, FormClosingEventArgs e)
         {
-            button2_Click(null, EventArgs.Empty);
+            save();
+            Application.Exit();
         }
         private void Slider_MouseMove(object sender, MouseEventArgs e)
         {

@@ -33,59 +33,53 @@ namespace VNT
                 if (!System.IO.File.Exists(Path.Combine(System.IO.Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName)))
                     System.IO.File.Copy(openFileDialog1.FileName, Path.Combine(System.IO.Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName));
             }
+            setting.path = Path.Combine(System.IO.Path.GetDirectoryName(fileName), openFileDialog1.SafeFileName);
         }
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
-            if (radioButton1.Checked)
+            if ((sender as RadioButton).Checked == true)
             {
-                comboBox1.Enabled = false;
-                numericUpDown1.Enabled = false;
-                comboBox3.Enabled = false;
-            }
-            else if (radioButton2.Checked)
-            {
-                comboBox1.Enabled = true;
-                numericUpDown1.Enabled = true;
-                comboBox3.Enabled = false;
-            }
-            else if (radioButton3.Checked)
-            {
-                comboBox1.Enabled = true;
-                numericUpDown1.Enabled = true;
-                comboBox3.Enabled = true;
-            }
-            else
-            {
-                comboBox1.Enabled = false;
-                numericUpDown1.Enabled = false;
-                comboBox2.Enabled = false;
-                comboBox3.Enabled = false;
-                VarTrack varSetter = new VarTrack(vars, new int[vars.Length], setting, false);
-                varSetter.ShowDialog();
-                setting = varSetter.config;
+                if (radioButton1.Checked)
+                {
+                    comboBox1.Enabled = false;
+                    numericUpDown1.Enabled = false;
+                    comboBox3.Enabled = false;
+                }
+                else if (radioButton2.Checked)
+                {
+                    comboBox1.Enabled = true;
+                    numericUpDown1.Enabled = true;
+                    comboBox3.Enabled = false;
+                }
+                else if (radioButton3.Checked)
+                {
+                    comboBox1.Enabled = true;
+                    numericUpDown1.Enabled = true;
+                    comboBox3.Enabled = true;
+                }
+                else
+                {
+                    comboBox1.Enabled = false;
+                    numericUpDown1.Enabled = false;
+                    comboBox2.Enabled = false;
+                    comboBox3.Enabled = false;
+                    VarTrack varSetter = new VarTrack(vars, new int[vars.Length], setting, false);
+                    varSetter.ShowDialog();
+                    setting = varSetter.config;
+                }
             }
         }
         private void Tweaker_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (radioButton1.Checked)
-                setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "1/" + comboBox1.Items[comboBox1.SelectedIndex].ToString());
+                setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "1/" + comboBox2.Items[comboBox2.SelectedIndex].ToString());
             else
             {
-                for (int i = 0; i < comboBox1.Items.Count; i++)
-                {
-                    if (comboBox1.Items[i].ToString() == @comboBox1.Text)
-                        comboBox1.SelectedIndex = i;
-                }
-                if (comboBox1.SelectedIndex == -1)
-                {
-                    comboBox1.Items.Add(@comboBox1.Text);
-                    comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
-                }
-                var = comboBox1.Items[comboBox1.SelectedIndex].ToString();
+                var = @comboBox1.Text;
                 if (radioButton2.Checked)
-                    setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "2/" + @comboBox1.Items[comboBox1.SelectedIndex].ToString() + "*" + (int)numericUpDown1.Value + "/" + comboBox2.Items[comboBox2.SelectedIndex].ToString());
+                    setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "2/" + @comboBox1.Text + "*" + (int)numericUpDown1.Value + "/" + comboBox2.Items[comboBox2.SelectedIndex].ToString());
                 else if (radioButton3.Checked)
-                    setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "3/" + @comboBox1.Items[comboBox1.SelectedIndex].ToString() + "*" + (int)numericUpDown1.Value + "/" + comboBox2.Items[comboBox2.SelectedIndex].ToString() + ";" + comboBox3.Items[comboBox3.SelectedIndex].ToString());
+                    setting = new Attributes(setting.position.X + "," + setting.position.Y, setting.size.X + "," + setting.size.Y, setting.path, "3/" + @comboBox1.Text + "*" + (int)numericUpDown1.Value + "/" + comboBox2.Items[comboBox2.SelectedIndex].ToString() + ";" + comboBox3.Items[comboBox3.SelectedIndex].ToString());
             }
         }
         private int findIndex(ComboBox cb, string compare)
@@ -133,8 +127,9 @@ namespace VNT
                 {
                     comboBox1.SelectedIndex = findIndex(comboBox1, setting.variables[0]);
                     numericUpDown1.Value = Convert.ToDecimal(setting.value);
-                    if (setting.type == 2)
+                    if (setting.type == 3)
                     {
+                        comboBox3.SelectedIndex = findIndex(comboBox3, setting.slides[1].ToString());
                         radioButton1.Checked = false;
                         radioButton3.Checked = true;
                         radioButton2.Checked = false;
@@ -142,7 +137,6 @@ namespace VNT
                     }
                     else
                     {
-                        comboBox3.SelectedIndex = findIndex(comboBox3, setting.slides[1].ToString());
                         radioButton1.Checked = false;
                         radioButton3.Checked = false;
                         radioButton2.Checked = true;

@@ -26,29 +26,6 @@ namespace VNT
             playMode = playOrEdit;
             config = setting;
         }
-        /*private void processCommand(Variable[] variables, string setting, bool playMode)
-        {
-            int i = 2;
-            int j = 0;
-            while(setting.IndexOf(";", i) != -1)
-            {
-                j = findAddVariable(j, setting.Substring(i, setting.IndexOf(";", i) - i), variables);
-                if (playMode)
-                    listBox1.Items.Add(variables[j].name + " = " + variables[j].value);
-                else
-                    checkedListBox1.SetItemChecked(j, true);
-                i = setting.IndexOf(";", i) + 1;
-            }
-        }
-        private int findAddVariable(int i, string name, Variable[] variables)
-        {
-            for(; i < variables.Length; i++)
-            {
-                if (variables[i].name == name)
-                    return i;
-            }
-            return -1;
-        }*/
         private void VarTrack_Load(object sender, EventArgs e)
         {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -70,7 +47,7 @@ namespace VNT
             int j = 0;
             for(int i = 0; i < checkedListBox1.Items.Count; i++)
             {
-                if(j == config.variables.Length)
+                if(config.variables != null && j < config.variables.Length)
                 {
                     if (checkedListBox1.Items[i].ToString() == config.variables[j])
                     {
@@ -81,15 +58,15 @@ namespace VNT
                         checkedListBox1.SetItemChecked(i, false);
                 }
             }
-            //processCommand(vars, config, playMode);
         }
         private void VarTrack_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (!playMode)
             {
-                string holder = "4/";
+                config.type = 4;
+                config.variables = new string[checkedListBox1.CheckedItems.Count];
                 for (int i = 0; i < checkedListBox1.CheckedItems.Count; i++)
-                    holder += checkedListBox1.CheckedItems[i].ToString() + ";";
+                    config.variables[i] = checkedListBox1.CheckedItems[i].ToString();
             }
         }
     }
