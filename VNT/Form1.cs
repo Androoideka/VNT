@@ -53,7 +53,6 @@ namespace VNT
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            MessageBox.Show("You need to put all the required pictures in the same folder otherwise it will not work!");
         }
     }
 }

@@ -12,26 +12,28 @@ namespace VNT
 {
     public partial class Slider : Form
     {
+        int anchor1, anchor2;
         string fileName;
-        bool playOrEdit;
+        bool playOrEdit, pomeranje = false;
+        List<Variable> vars = new List<Variable>();
+        List<PictureBox> pictureBoxs = new List<PictureBox>();
+        List<Slide> slides = new List<Slide>();
         public Slider(string fName, bool openOrSave)
         {
             InitializeComponent();
+            this.DoubleBuffered = true;
             fileName = fName;
             playOrEdit = openOrSave;
         }
-        private void findVariables(string[] feed, out List<Variable> variables)
+        private void findVariables(string[] feed, List<Variable> variables)
         {
-            int count = 0;
-            while (feed[count].Length < 5 || feed[count].Substring(0, 5) != "Slide")
-                count++;
-            variables = new List<Variable>(count);
-            for (int i = 0; i < count; i++)
+            int i = 0;
+            while (feed[i].Length < 5 || feed[i].Substring(0, 5) != "Slide")
+            {
                 variables.Add(new Variable(feed[i]));
+                i++;
+            }
         }
-        List<Variable> vars;
-        List<PictureBox> pictureBoxs;
-        List<Slide> slides;
         private int slideNum(string[] feed)
         {
             int n = 0;
@@ -42,8 +44,9 @@ namespace VNT
             }
             return n;
         }
-        private string[] storeFromFile(StreamReader sr)
+        private string[] storeFromFile(string file)
         {
+            StreamReader sr = new StreamReader(file);
             int i = 0;
             while (!sr.EndOfStream)
             {
@@ -81,88 +84,67 @@ namespace VNT
             }
             return true;
         }
+        private void fillSlides(List<Slide> slides, int start, string[] feed)
+        {
+            try
+            {
+                for (int i = 0; i < slideNum(feed); i++)
+                {
+                    slides.Add(new Slide(feed, start));
+                    start += 3 + slides[i].pbNum * 5;
+                }
+            }
+            catch
+            {
+                MessageBox.Show("Incorrect format. Contact developer at andrej@gasic.rs");
+                Application.Exit();
+            }
+        }
         private void Slider_Load(object sender, EventArgs e)
         {
             this.BackColor = Color.Magenta;
             this.TransparencyKey = Color.Magenta;
             this.BackgroundImage = Image.FromFile(Application.StartupPath + @"\Default.png");
+            try
+            {
+                string[] gameData = storeFromFile(fileName);
+                findVariables(gameData, vars);
+                fillSlides(slides, vars.Count, gameData);
+            }
+            catch { }
             if (playOrEdit)
             {
-                string[] gameData = storeFromFile(new StreamReader(fileName));
-                pictureBoxs = new List<PictureBox>();
-                findVariables(gameData, out vars);
-                slides = new List<Slide>(slideNum(gameData));
-                //try
-                //{
-                    int startInt = vars.Count;
-                    for (int i = 0; i < slideNum(gameData); i++)
-                    {
-                        slides.Add(new Slide(gameData, startInt));
-                        startInt += 3 + slides[i].pbNum * 5;
-                    }
-                /*}
-                catch
-                { MessageBox.Show("Incorrect format. Contact developer at andrej@gasic.rs"); }*/
                 for (int i = 0; i < maxPictureBox(slides); i++)
                 {
                     pictureBoxs.Add(new PictureBox());
                     pictureBoxs[i].Tag = i;
+                    pictureBoxs[i].SizeMode = PictureBoxSizeMode.StretchImage;
                     pictureBoxs[i].MouseClick += new MouseEventHandler(Clicky);
                     pictureBoxs[i].Paint += new PaintEventHandler(Painter);
                 }
-                try
-                {
-                    numericUpDown1.Value = Convert.ToDecimal(slides[0].index);
-                }
-                catch { }
             }
             else
             {
-                List<Slide> tempSlides;
-                try
+                for (int i = 0; i < maxPictureBox(slides); i++)
                 {
-                    string[] gameData = storeFromFile(new StreamReader(fileName));
-                    findVariables(gameData, out vars);
-                    tempSlides = new List<Slide>(slideNum(gameData));
-                    try
-                    {
-                        int startInt = vars.Count;
-                        for (int i = 0; i < slideNum(gameData); i++)
-                        {
-                            slides.Add(new Slide(gameData, startInt));
-                            startInt += 3 + slides[i].pbNum * 5;
-                        }
-                    }
-                    catch
-                    { MessageBox.Show("Incorrect format. Contact developer at andrej@gasic.rs"); }
-                }
-                catch
-                {
-                    tempSlides = new List<Slide>();
-                    vars = new List<Variable>();
-                }
-                pictureBoxs = new List<PictureBox>();
-                slides = new List<Slide>(tempSlides.Count);
-                for (int i = 0; i < tempSlides.Count; i++)
-                    slides[i] = tempSlides[i];
-                for (int i = 0; i < maxPictureBox(tempSlides); i++)
-                {
-                    pictureBoxs[i] = new PictureBox();
-                    pictureBoxs[i].SizeMode = PictureBoxSizeMode.StretchImage;
+                    pictureBoxs.Add(new PictureBox());
                     pictureBoxs[i].Tag = i;
-                    Bitmap pic = new Bitmap(Image.FromFile(Application.StartupPath + @"\DefaultPic.png"));
-                    pic.MakeTransparent(Color.White);
-                    Controls.Add(pictureBoxs[i]);
-                    pictureBoxs[i].Image = pic;
+                    pictureBoxs[i].SizeMode = PictureBoxSizeMode.StretchImage;
                     pictureBoxs[i].MouseClick += new MouseEventHandler(Clicky);
                     pictureBoxs[i].Paint += new PaintEventHandler(Painter);
                     pictureBoxs[i].MouseEnter += new EventHandler(Hover);
                     pictureBoxs[i].MouseLeave += new EventHandler(HoverOut);
                 }
+                this.KeyPress += new KeyPressEventHandler(Slider_KeyPress);
+                this.MouseDown += new MouseEventHandler(Slider_MouseDown);
+                this.MouseMove += new MouseEventHandler(Slider_MouseMove);
+                this.MouseUp += new MouseEventHandler(Slider_MouseUp);
                 button1.Enabled = true;
                 button1.Visible = true;
-                numericUpDown1.Value = 1;
+                button2.Enabled = true;
+                button2.Visible = true;
             }
+            numericUpDown1_ValueChanged(null, EventArgs.Empty);
         }
         private void Painter(object sender, PaintEventArgs e)
         {
@@ -185,88 +167,105 @@ namespace VNT
         {
             if (playOrEdit)
             {
-                try
+                int index = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
+                string role = slides[index].info[(int)(sender as PictureBox).Tag][4];
+                if (Convert.ToInt32(role.Substring(0, 1)) == 1)
+                    numericUpDown1.Value = Convert.ToDecimal(role.Substring(2, role.Length - 2));
+                else if (Convert.ToInt32(role.Substring(0, 1)) == 3)
                 {
-                    int index = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
-                    string role = slides[index].info[(int)(sender as PictureBox).Tag][4];
-                    if (Convert.ToInt32(role.Substring(0, 1)) == 1)
-                        numericUpDown1.Value = Convert.ToDecimal(role.Substring(2, role.Length - 2));
-                    else if (Convert.ToInt32(role.Substring(0, 1)) == 3)
+                    for (int i = 0; i < vars.Count; i++)
                     {
-                        for (int i = 0; i < vars.Count; i++)
+                        if (vars[i].name == role.Substring(2, role.IndexOf(">") - 2))
                         {
-                            if (vars[i].name == role.Substring(2, role.IndexOf(">") - 2))
-                            {
-                                if (vars[i].value > Convert.ToInt32(role.Substring(role.IndexOf(">") + 1, role.IndexOf("/", 2) - role.IndexOf(">") - 1)))
-                                    numericUpDown1.Value = Convert.ToDecimal(role.Substring(role.IndexOf("/", 2) + 1, role.IndexOf(";") - role.IndexOf("/", 2) - 1));
-                                else
-                                    numericUpDown1.Value = Convert.ToDecimal(role.Substring(role.IndexOf(";") + 1, role.Length - role.IndexOf(";") - 1));
-                            }
+                            if (vars[i].value > Convert.ToInt32(role.Substring(role.IndexOf(">") + 1, role.IndexOf("/", 2) - role.IndexOf(">") - 1)))
+                                numericUpDown1.Value = Convert.ToDecimal(role.Substring(role.IndexOf("/", 2) + 1, role.IndexOf(";") - role.IndexOf("/", 2) - 1));
+                            else
+                                numericUpDown1.Value = Convert.ToDecimal(role.Substring(role.IndexOf(";") + 1, role.Length - role.IndexOf(";") - 1));
                         }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < vars.Count; i++)
-                        {
-                            if (vars[i].name == role.Substring(2, role.IndexOf("+") - 2))
-                                vars[i].value += Convert.ToInt32(role.Substring(role.IndexOf("+") + 1, role.IndexOf("/", 2) - role.IndexOf("+") - 1));
-                        }
-                        numericUpDown1.Value = Convert.ToDecimal(role.Substring(role.IndexOf("/", 2) + 1, role.Length - role.IndexOf("/", 2) - 1));
                     }
                 }
-                catch { MessageBox.Show("The maker of this was probably using an older version. Contact them."); }
+                else
+                {
+                    for (int i = 0; i < vars.Count; i++)
+                    {
+                        if (vars[i].name == role.Substring(2, role.IndexOf("+") - 2))
+                            vars[i].value += Convert.ToInt32(role.Substring(role.IndexOf("+") + 1, role.IndexOf("/", 2) - role.IndexOf("+") - 1));
+                    }
+                    numericUpDown1.Value = Convert.ToDecimal(role.Substring(role.IndexOf("/", 2) + 1, role.Length - role.IndexOf("/", 2) - 1));
+                }
             }
             else
             {
                 int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
-                List<string> slideList = new List<string>();
-                List<string> variables = new List<string>();
-                for(int i = 0; i < slides.Count; i++)
-                    slideList.Add(slides[i].index.ToString());
-                for (int i = 0; i < vars.Count; i++)
-                    variables.Add(vars[i].name);
-                string path;
-                if (slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] != "DefaultPic.png")
-                { path = fileName.Substring(0, fileName.LastIndexOf(@"\") + 1) + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
-                else
-                { path = Application.StartupPath + @"\" + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
-                Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), path, slides[slideRefer].info[(int)(sender as PictureBox).Tag][4]);
-                twok.ShowDialog();
-                if(varDoesntExist(vars, twok.var))
-                    vars.Add(new Variable(twok.var));
-                System.IO.File.Copy(twok.image, fileName.Substring(0, fileName.LastIndexOf(@"\")) + twok.image.Substring(twok.image.LastIndexOf(@"\"), twok.image.Length - twok.image.LastIndexOf(@"\")), true);
-                Bitmap bmp = new Bitmap(Image.FromFile(twok.image));
-                bmp.MakeTransparent(Color.White);
-                (sender as PictureBox).Image = bmp;
-                slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] = twok.image.Substring(twok.image.LastIndexOf(@"\") + 1, twok.image.Length - 1 - twok.image.LastIndexOf(@"\"));
-                slides[slideRefer].info[(int)(sender as PictureBox).Tag][4] = twok.setting;
-                for(int i = 0; i < slides.Count; i++)
+                if (e.Button == MouseButtons.Left)
                 {
-                    if (vars[i].IsUnused(slides))
-                        vars.RemoveAt(i);
+                    List<string> slideList = new List<string>();
+                    List<string> variables = new List<string>();
+                    for (int i = 0; i < Math.Max(slides.Count, vars.Count); i++)
+                    {
+                        if(i < slides.Count)
+                            slideList.Add(slides[i].index.ToString());
+                        if(i < vars.Count)
+                            variables.Add(vars[i].name);
+                    }
+                    string path;
+                    if (slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] != "DefaultPic.png")
+                    { path = fileName.Substring(0, fileName.LastIndexOf(@"\") + 1) + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
+                    else
+                    { path = Application.StartupPath + @"\" + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
+                    Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), path, slides[slideRefer].info[(int)(sender as PictureBox).Tag][4]);
+                    twok.ShowDialog();
+                    Bitmap bmp = new Bitmap(Image.FromFile(twok.image));
+                    bmp.MakeTransparent(Color.Gray);
+                    (sender as PictureBox).Image = bmp;
+                    slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] = twok.image.Substring(twok.image.LastIndexOf(@"\") + 1, twok.image.Length - 1 - twok.image.LastIndexOf(@"\"));
+                    slides[slideRefer].info[(int)(sender as PictureBox).Tag][4] = twok.setting;
+                    if (varDoesntExist(vars, twok.var))
+                        vars.Add(new Variable(twok.var));
+                    try
+                    { System.IO.File.Copy(twok.image, fileName.Substring(0, fileName.LastIndexOf(@"\")) + twok.image.Substring(twok.image.LastIndexOf(@"\"), twok.image.Length - twok.image.LastIndexOf(@"\")), true); }
+                    catch { }
+                    for (int i = 0; i < vars.Count; i++)
+                    {
+                        if (vars[i].IsUnused(slides))
+                        {
+                            vars.RemoveAt(i);
+                            i--;
+                        }
+                    }
+                }
+                else
+                {
+                    pictureBoxs.RemoveAt((int)(sender as PictureBox).Tag);
+                    Controls.Remove((sender as PictureBox));
+                    slides[slideRefer].info.RemoveAt((int)(sender as PictureBox).Tag);
+                    slides[slideRefer].pbNum--;
+                    for (int i = 0; i < pictureBoxs.Count; i++)
+                        pictureBoxs[i].Tag = i;
                 }
             }
         }
         private void Hover(object sender, EventArgs e)
         {
-            pictar = Convert.ToInt32((sender as PictureBox).Tag);
             textBox1.Enabled = true;
             textBox1.Visible = true;
             textBox1.Text = slides[findSlide(slides, Convert.ToSingle(numericUpDown1.Value))].info[Convert.ToInt32((sender as PictureBox).Tag)][3];
-            textBox1.Top = (sender as PictureBox).Top - 10;
-            textBox1.Left = (sender as PictureBox).Top;
+            textBox1.Top = (sender as PictureBox).Top - 20;
+            textBox1.Left = (sender as PictureBox).Left;
             textBox1.Focus();
         }
         private void HoverOut(object sender, EventArgs e)
         {
-            pictar = -1;
             textBox1.Enabled = false;
             textBox1.Visible = false;
             int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
-            slides[slideRefer].info[Convert.ToInt32((sender as PictureBox).Tag)][3] = textBox1.Text;
-            (sender as PictureBox).Refresh();
+            try
+            {
+                slides[slideRefer].info[Convert.ToInt32((sender as PictureBox).Tag)][3] = textBox1.Text;
+                (sender as PictureBox).Refresh();
+            }
+            catch { }
         }
-        int pictar;
         private void Slider_KeyPress(object sender, KeyPressEventArgs e)
         {
             int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
@@ -275,24 +274,18 @@ namespace VNT
                 slides.Add(new Slide());
                 slideRefer = slides.Count - 1;
             }
-            try
-            {
-                if (e.KeyChar == (char)Keys.Delete)
-                {
-                    slides[slideRefer].info.RemoveAt(pictar);
-                    slides[slideRefer].pbNum--;
-                    numericUpDown1.Value = Convert.ToDecimal(slides[slideRefer].index);
-                }
-            }
-            catch { }
             if (!playOrEdit)
             {
                 if (e.KeyChar == (char)98)
                 {
+                    openFileDialog1.Filter = "Image Files(*.BMP; *.JPG; *.GIF; *.PNG)| *.BMP; *.JPG; *.GIF; *.PNG";
                     if (openFileDialog1.ShowDialog() == DialogResult.OK)
                     {
                         slides[slideRefer].pathBG = openFileDialog1.FileName;
                         this.BackgroundImage = Image.FromFile(openFileDialog1.FileName);
+                        try
+                        { System.IO.File.Copy(openFileDialog1.FileName, fileName.Substring(0, fileName.LastIndexOf(@"\")) + openFileDialog1.FileName.Substring(openFileDialog1.FileName.LastIndexOf(@"\"), openFileDialog1.FileName.Length - openFileDialog1.FileName.LastIndexOf(@"\")), true); }
+                        catch { }
                     }
                 }
             }
@@ -326,13 +319,13 @@ namespace VNT
                 }
                 sw.Close();
             }
-            Application.Exit();
         }
         private void button1_Click(object sender, EventArgs e)
         {
             try
             {
                 slides.RemoveAt(findSlide(slides, Convert.ToSingle(numericUpDown1.Value)));
+                numericUpDown1_ValueChanged(null, EventArgs.Empty);
             }
             catch { }
         }
@@ -347,8 +340,8 @@ namespace VNT
                     {
                         string location = slides[index].info[i][0],
                             size = slides[index].info[i][1];
-                        Bitmap b = new Bitmap(Image.FromFile(slides[index].info[i][2]));
-                        b.MakeTransparent(Color.White);
+                        Bitmap b = new Bitmap(Image.FromFile(fileName.Substring(0, fileName.LastIndexOf(@"\") + 1) + slides[index].info[i][2]));
+                        b.MakeTransparent(Color.Gray);
                         this.BackColor = Color.Magenta;
                         this.TransparencyKey = Color.Magenta;
                         if (slides[index].pathBG != @"Default.png")
@@ -360,7 +353,7 @@ namespace VNT
                         pictureBoxs[i].Width = Convert.ToInt32(size.Substring(0, size.IndexOf(",")));
                         pictureBoxs[i].Height = Convert.ToInt32(size.Substring(size.IndexOf(",") + 1, size.Length - size.IndexOf(",") - 1));
                         pictureBoxs[i].Image = b;
-                        pictureBoxs[i].SizeMode = PictureBoxSizeMode.StretchImage;
+                        Controls.Add(pictureBoxs[i]);
                         pictureBoxs[i].Visible = true;
                         pictureBoxs[i].Enabled = true;
                         pictureBoxs[i].Refresh();
@@ -384,70 +377,90 @@ namespace VNT
                 }
             }
         }
-
         private void Slider_MouseDown(object sender, MouseEventArgs e)
         {
-            if (!playOrEdit)
+            int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
+            if (slideRefer == -1)
             {
-                int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
-                if (slideRefer == -1)
-                {
-                    slides.Add(new Slide());
-                    slideRefer = slides.Count - 1;
-                }
-                if (slides[slideRefer].pbNum >= pictureBoxs.Count)
-                {
-                    while (slides[slideRefer].pbNum >= pictureBoxs.Count)
-                    {
-                        pictureBoxs.Add(new PictureBox());
-                        pictureBoxs[pictureBoxs.Count - 1].Tag = pictureBoxs.Count - 1;
-                        Controls.Add(pictureBoxs[pictureBoxs.Count - 1]);
-                    }
-                }
-                Bitmap b = new Bitmap(Image.FromFile(Application.StartupPath + @"\DefaultPic.png"));
-                b.MakeTransparent(Color.White);
-                pictureBoxs[slides[slideRefer].pbNum].Left = e.X;
-                pictureBoxs[slides[slideRefer].pbNum].Top = e.Y;
-                pictureBoxs[slides[slideRefer].pbNum].Image = b;
-                slides[slideRefer].index = Convert.ToSingle(numericUpDown1.Value);
-                slides[slideRefer].info.Add(new string[5]);
-                slides[slideRefer].pathBG = "Default.png";
-                slides[slideRefer].info[slides[slideRefer].pbNum][2] = "DefaultPic.png";
-                slides[slideRefer].info[slides[slideRefer].pbNum][3] = "";
-                slides[slideRefer].info[slides[slideRefer].pbNum][4] = "1/" + slides[slideRefer].index;
+                slides.Add(new Slide());
+                slideRefer = slides.Count - 1;
             }
+            if (slides[slideRefer].pbNum >= pictureBoxs.Count)
+            {
+                while (slides[slideRefer].pbNum >= pictureBoxs.Count)
+                {
+                    pictureBoxs.Add(new PictureBox());
+                    pictureBoxs[pictureBoxs.Count - 1].Tag = pictureBoxs.Count - 1;
+                    pictureBoxs[pictureBoxs.Count - 1].SizeMode = PictureBoxSizeMode.StretchImage;
+                    Controls.Add(pictureBoxs[pictureBoxs.Count - 1]);
+                    Bitmap b = new Bitmap(Image.FromFile(Application.StartupPath + @"\DefaultPic.png"));
+                    b.MakeTransparent(Color.Gray);
+                    pictureBoxs[slides[slideRefer].pbNum].Image = b;
+                }
+            }
+            anchor1 = e.X;
+            anchor2 = e.Y;
+            pictureBoxs[slides[slideRefer].pbNum].Width = 0;
+            pictureBoxs[slides[slideRefer].pbNum].Height = 0;
+            pictureBoxs[slides[slideRefer].pbNum].Left = e.X;
+            pictureBoxs[slides[slideRefer].pbNum].Top = e.Y;
+            slides[slideRefer].index = Convert.ToSingle(numericUpDown1.Value);
+            slides[slideRefer].info.Add(new string[5]);
+            slides[slideRefer].pathBG = "Default.png";
+            slides[slideRefer].info[slides[slideRefer].pbNum][2] = "DefaultPic.png";
+            slides[slideRefer].info[slides[slideRefer].pbNum][3] = "";
+            slides[slideRefer].info[slides[slideRefer].pbNum][4] = "1/" + slides[slideRefer].index;
+            pictureBoxs[slides[slideRefer].pbNum].Visible = true;
+            pictureBoxs[slides[slideRefer].pbNum].Enabled = true;
+            pomeranje = true;
         }
-
+        private void Slider_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Application.Exit();
+        }
         private void Slider_MouseUp(object sender, MouseEventArgs e)
         {
-            if (!playOrEdit)
+            pomeranje = false;
+            int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
+            try
             {
-                int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
-                if (e.X < pictureBoxs[slides[slideRefer].pbNum].Left)
-                {
-                    pictureBoxs[slides[slideRefer].pbNum].Width = pictureBoxs[slides[slideRefer].pbNum].Left - e.X;
-                    pictureBoxs[slides[slideRefer].pbNum].Left = e.X;
-                }
-                else
-                    pictureBoxs[slides[slideRefer].pbNum].Width = e.X - pictureBoxs[slides[slideRefer].pbNum].Left;
-                if (e.Y < pictureBoxs[slides[slideRefer].pbNum].Top)
-                {
-                    pictureBoxs[slides[slideRefer].pbNum].Height = pictureBoxs[slides[slideRefer].pbNum].Top - e.Y;
-                    pictureBoxs[slides[slideRefer].pbNum].Top = e.Y;
-                }
-                else
-                    pictureBoxs[slides[slideRefer].pbNum].Height = e.Y - pictureBoxs[slides[slideRefer].pbNum].Top;
                 slides[slideRefer].info[slides[slideRefer].pbNum][0] = pictureBoxs[slides[slideRefer].pbNum].Top + "," + pictureBoxs[slides[slideRefer].pbNum].Left;
                 slides[slideRefer].info[slides[slideRefer].pbNum][1] = pictureBoxs[slides[slideRefer].pbNum].Width + "," + pictureBoxs[slides[slideRefer].pbNum].Height;
                 pictureBoxs[slides[slideRefer].pbNum].MouseClick += new MouseEventHandler(Clicky);
                 pictureBoxs[slides[slideRefer].pbNum].Paint += new PaintEventHandler(Painter);
                 pictureBoxs[slides[slideRefer].pbNum].MouseEnter += new EventHandler(Hover);
                 pictureBoxs[slides[slideRefer].pbNum].MouseLeave += new EventHandler(HoverOut);
-                pictureBoxs[slides[slideRefer].pbNum].Refresh();
-                Controls.Add(pictureBoxs[slides[slideRefer].pbNum]);
-                pictureBoxs[slides[slideRefer].pbNum].Visible = true;
-                pictureBoxs[slides[slideRefer].pbNum].Enabled = true;
                 slides[slideRefer].pbNum++;
+            }
+            catch { }
+        }
+        private void Slider_MouseMove(object sender, MouseEventArgs e)
+        {
+            if(pomeranje)
+            {
+                int slideRefer = findSlide(slides, Convert.ToSingle(numericUpDown1.Value));
+                pictureBoxs[slides[slideRefer].pbNum].SuspendLayout();
+                if (e.X <= pictureBoxs[slides[slideRefer].pbNum].Left)
+                {
+                    pictureBoxs[slides[slideRefer].pbNum].Width = anchor1 - e.X;
+                    pictureBoxs[slides[slideRefer].pbNum].Left = e.X;
+                }
+                else
+                {
+                    pictureBoxs[slides[slideRefer].pbNum].Width = e.X - anchor1;
+                    pictureBoxs[slides[slideRefer].pbNum].Left = anchor1;
+                }
+                if (e.Y <= pictureBoxs[slides[slideRefer].pbNum].Top)
+                {
+                    pictureBoxs[slides[slideRefer].pbNum].Height = anchor2 - e.Y;
+                    pictureBoxs[slides[slideRefer].pbNum].Top = e.Y;
+                }
+                else
+                {
+                    pictureBoxs[slides[slideRefer].pbNum].Height = e.Y - anchor2;
+                    pictureBoxs[slides[slideRefer].pbNum].Top = anchor2;
+                }
+                pictureBoxs[slides[slideRefer].pbNum].ResumeLayout();
             }
         }
     }

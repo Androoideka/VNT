@@ -25,9 +25,9 @@ namespace VNT
         }
         private void button1_Click(object sender, EventArgs e)
         {
+            openFileDialog1.Filter = "Image Files(*.BMP; *.JPG; *.GIF; *.PNG)| *.BMP; *.JPG; *.GIF; *.PNG";
             if (openFileDialog1.ShowDialog() == DialogResult.OK)
                 image = openFileDialog1.FileName;
-
         }
         private void radioButton1_CheckedChanged(object sender, EventArgs e)
         {
@@ -82,7 +82,6 @@ namespace VNT
                 this.Close();
             }
         }
-
         private void Tweaker_Load(object sender, EventArgs e)
         {
             this.FormBorderStyle = FormBorderStyle.FixedSingle;
