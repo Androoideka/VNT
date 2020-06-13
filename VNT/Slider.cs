@@ -26,10 +26,8 @@ namespace VNT
             while (feed[count].Length < 5 || feed[count].Substring(0, 5) != "Slide")
                 count++;
             variables = new List<Variable>(count);
-            for (int i = 0; i < variables.Count; i++)
-            {
-                variables[i] = new Variable(feed[i]);
-            }
+            for (int i = 0; i < count; i++)
+                variables.Add(new Variable(feed[i]));
         }
         List<Variable> vars;
         List<PictureBox> pictureBoxs;
@@ -74,6 +72,15 @@ namespace VNT
             }
             return max;
         }
+        private bool varDoesntExist(List<Variable> variables, string name)
+        {
+            for (int i = 0; i < variables.Count; i++)
+            {
+                if (variables[i].name == name)
+                    return false;
+            }
+            return true;
+        }
         private void Slider_Load(object sender, EventArgs e)
         {
             this.BackColor = Color.Magenta;
@@ -85,24 +92,29 @@ namespace VNT
                 pictureBoxs = new List<PictureBox>();
                 findVariables(gameData, out vars);
                 slides = new List<Slide>(slideNum(gameData));
-                try
-                {
+                //try
+                //{
                     int startInt = vars.Count;
-                    for (int i = 0; i < slides.Count; i++)
+                    for (int i = 0; i < slideNum(gameData); i++)
                     {
-                        slides[i] = new Slide(gameData, startInt);
+                        slides.Add(new Slide(gameData, startInt));
                         startInt += 3 + slides[i].pbNum * 5;
                     }
-                }
+                /*}
                 catch
-                { MessageBox.Show("Incorrect format. Contact developer at andrej@gasic.rs"); }
+                { MessageBox.Show("Incorrect format. Contact developer at andrej@gasic.rs"); }*/
                 for (int i = 0; i < maxPictureBox(slides); i++)
                 {
-                    pictureBoxs[i] = new PictureBox();
+                    pictureBoxs.Add(new PictureBox());
                     pictureBoxs[i].Tag = i;
                     pictureBoxs[i].MouseClick += new MouseEventHandler(Clicky);
                     pictureBoxs[i].Paint += new PaintEventHandler(Painter);
                 }
+                try
+                {
+                    numericUpDown1.Value = Convert.ToDecimal(slides[0].index);
+                }
+                catch { }
             }
             else
             {
@@ -115,9 +127,9 @@ namespace VNT
                     try
                     {
                         int startInt = vars.Count;
-                        for (int i = 0; i < slides.Count; i++)
+                        for (int i = 0; i < slideNum(gameData); i++)
                         {
-                            slides[i] = new Slide(gameData, startInt);
+                            slides.Add(new Slide(gameData, startInt));
                             startInt += 3 + slides[i].pbNum * 5;
                         }
                     }
@@ -147,6 +159,12 @@ namespace VNT
                 slides = new List<Slide>(tempSlides.Count);
                 for (int i = 0; i < tempSlides.Count; i++)
                     slides[i] = tempSlides[i];
+                try
+                {
+                    numericUpDown1.Value = Convert.ToDecimal(slides[0].index);
+                }
+                catch
+                { }
             }
         }
         private void Painter(object sender, PaintEventArgs e)
@@ -189,9 +207,10 @@ namespace VNT
                 pictureBoxs[slides[slideRefer].pbNum].MouseLeave += new EventHandler(HoverOut);
                 slides[slideRefer].index = Convert.ToSingle(numericUpDown1.Value);
                 slides[slideRefer].info.Add(new string[5]);
+                slides[slideRefer].pathBG = "Default.png";
                 slides[slideRefer].info[slides[slideRefer].pbNum][0] = pictureBoxs[slides[slideRefer].pbNum].Top + "," + pictureBoxs[slides[slideRefer].pbNum].Left;
                 slides[slideRefer].info[slides[slideRefer].pbNum][1] = pictureBoxs[slides[slideRefer].pbNum].Width + "," + pictureBoxs[slides[slideRefer].pbNum].Height;
-                slides[slideRefer].info[slides[slideRefer].pbNum][2] = @"DefaultPic.png";
+                slides[slideRefer].info[slides[slideRefer].pbNum][2] = "DefaultPic.png";
                 slides[slideRefer].info[slides[slideRefer].pbNum][3] = "";
                 slides[slideRefer].info[slides[slideRefer].pbNum][4] = "1/" + slides[slideRefer].index;
                 pictureBoxs[slides[slideRefer].pbNum].Visible = true;
@@ -221,7 +240,7 @@ namespace VNT
                     string role = slides[index].info[(int)(sender as PictureBox).Tag][4];
                     if (Convert.ToInt32(role.Substring(0, 1)) == 1)
                         numericUpDown1.Value = Convert.ToDecimal(role.Substring(2, role.Length - 2));
-                    else if (Convert.ToInt32(role.Substring(0, 1)) == 2)
+                    else if (Convert.ToInt32(role.Substring(0, 1)) == 3)
                     {
                         for (int i = 0; i < vars.Count; i++)
                         {
@@ -255,13 +274,26 @@ namespace VNT
                     slideList.Add(slides[i].index.ToString());
                 for (int i = 0; i < vars.Count; i++)
                     variables.Add(vars[i].name);
-                Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), slides[slideRefer].info[(int)(sender as PictureBox).Tag]);
+                string path;
+                if (slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] != "DefaultPic.png")
+                { path = fileName.Substring(0, fileName.LastIndexOf(@"\") + 1) + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
+                else
+                { path = Application.StartupPath + @"\" + slides[slideRefer].info[(int)(sender as PictureBox).Tag][2]; }
+                Tweaker twok = new Tweaker(slideList.ToArray(), variables.ToArray(), path, slides[slideRefer].info[(int)(sender as PictureBox).Tag][4]);
                 twok.ShowDialog();
+                if(varDoesntExist(vars, twok.variable))
+                    vars.Add(new Variable(twok.variable));
+                System.IO.File.Copy(twok.pictar, fileName.Substring(0, fileName.LastIndexOf(@"\")) + twok.pictar.Substring(twok.pictar.LastIndexOf(@"\"), twok.pictar.Length - twok.pictar.LastIndexOf(@"\")), true);
                 Bitmap bmp = new Bitmap(Image.FromFile(twok.pictar));
                 bmp.MakeTransparent(Color.White);
                 (sender as PictureBox).Image = bmp;
-                slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] = twok.pictar;
+                slides[slideRefer].info[(int)(sender as PictureBox).Tag][2] = twok.pictar.Substring(twok.pictar.LastIndexOf(@"\") + 1, twok.pictar.Length - 1 - twok.pictar.LastIndexOf(@"\"));
                 slides[slideRefer].info[(int)(sender as PictureBox).Tag][4] = twok.clickedy;
+                for(int i = 0; i < slides.Count; i++)
+                {
+                    if (vars[i].IsUnused(slides))
+                        vars.RemoveAt(i);
+                }
             }
         }
         bool uradjeno = false;
@@ -314,23 +346,25 @@ namespace VNT
             if (!playOrEdit)
             {
                 StreamWriter sw = new StreamWriter(fileName);
-                sw.Write(pictureBoxs.Count);
                 int i = 0;
                 for (i = 0; i < vars.Count; i++)
-                    sw.Write("\r\n" + vars[i].name);
+                    sw.WriteLine(vars[i].name);
                 i = 0;
-                while(i < slides.Count && slides[i].index != 0)
+                while(i < slides.Count)
                 {
-                    sw.Write("\r\n" + "Slide " + slides[i].index);
-                    sw.Write("\r\n" + slides[i].pathBG);
-                    sw.Write("\r\n" + slides[i].pbNum);
+                    sw.WriteLine("Slide " + slides[i].index);
+                    sw.WriteLine(slides[i].pathBG);
+                    sw.WriteLine(slides[i].pbNum);
                     for (int j = 0; j < slides[i].pbNum; j++)
                     {
-                        sw.Write("\r\n" + slides[i].info[j][0]);
-                        sw.Write("\r\n" + slides[i].info[j][1]);
-                        sw.Write("\r\n" + slides[i].info[j][2]);
-                        sw.Write("\r\n" + slides[i].info[j][3]);
-                        sw.Write("\r\n" + slides[i].info[j][4]);
+                        sw.WriteLine(slides[i].info[j][0]);
+                        sw.WriteLine(slides[i].info[j][1]);
+                        sw.WriteLine(slides[i].info[j][2]);
+                        sw.WriteLine(slides[i].info[j][3]);
+                        if (i == slides.Count - 1 && j == slides[i].pbNum - 1)
+                            sw.Write(slides[i].info[j][4]);
+                        else
+                            sw.WriteLine(slides[i].info[j][4]);
                     }
                     i++;
                 }
